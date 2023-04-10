@@ -171,7 +171,6 @@ class Patcher:
                     extracted_file.write(extracted_buffer.read())
 
         self.print_done('Done! Gadgets were updated')
-
         return True
 
     def download_file(self, url, target_path):
@@ -183,27 +182,10 @@ class Patcher:
         with open(target_path, 'wb') as f:
             downloaded = 0
 
-            if self.VERBOSITY >= self.VERBOSITY_HIGH:
-                sys.stdout.write('\r{0}[+] Downloading {1} - 000 %%{2}'
-                                 .format(BColors.COLOR_BLUE, file_name, BColors.COLOR_ENDC))
-
-                sys.stdout.flush()
-
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
                     downloaded += len(chunk)
-                    percentage = int(downloaded * 100 / total_length)
-
-                    if self.VERBOSITY >= self.VERBOSITY_HIGH:
-                        sys.stdout.write('\r{0}[+] Downloading {1} - {2:03d} %%{3}'
-                                         .format(BColors.COLOR_BLUE, file_name, percentage, BColors.COLOR_ENDC))
-
-                        sys.stdout.flush()
-
                     f.write(chunk)
-
-        if self.VERBOSITY >= self.VERBOSITY_HIGH:
-            sys.stdout.write('\n')
 
     def get_recommended_gadget(self):
         ret = None
