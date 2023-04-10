@@ -1,7 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
-
 import os
 import sys
 import json
@@ -818,48 +814,19 @@ class Patcher:
         return path
 
 
-def signal_handler(_signal_id, _frame):
-    print('\n' + BColors.COLOR_RED + 'YOU PRESSED CTRL+C! Exiting now...' + BColors.ENDC)
-
-    sys.exit(1)
-
-
-# noinspection SpellCheckingInspection
 def main():
     patcher = Patcher()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--apk', help='Specify the apk you want to patch')
-    parser.add_argument('-g', '--gadget', help='Specify the frida-gadget file')
-    parser.add_argument('--autoload-script', help='Auto load script')
-    parser.add_argument('-v', '--verbosity', help='Verbosity level (0 to 3). Default is 3')
-    parser.add_argument('--update-gadgets', help='Update frida-gadgets', action='store_true')
-    parser.add_argument('-f', '--force-extract-resources', help='Force extract resources and manifest',
-                        action='store_true')
-
-    parser.add_argument('-e', '--enable-user-certificates', help='Add some configs in apk to accept user certificates',
-                        action='store_true')
-
-    parser.add_argument('--prevent-frida-gadget', help='Does not insert frida gadget', action='store_true')
-    parser.add_argument('-w', '--wait-before-repackage', help='Waits for your OK before repackage the apk',
-                        action='store_true')
-    parser.add_argument('-k', '--keep-keystore', help='Keeps generated keystore for future use',
-                        action='store_true')
-
-    parser.add_argument('-o', '--output-file', help='Specify the output file (patched)')
-
-    group = parser.add_argument_group('Execute command before repackage')
-    group.add_argument('-x', '--exec-before-repackage', help='Specify a command to execute before repackage')
-
-    group.add_argument('--pass-temp-path', help='Should I pass the apk folder as parameter to your command?',
-                       action='store_true')
+    parser.add_argument('-a', '--apk', required=True, help='apk to patch')
+    parser.add_argument('-g', '--gadget', required=False, help='frida-gadget file')
+    parser.add_argument('-s', '--script-path', required=True, help='js script to inject')
+    parser.add_argument('-e', '--enable-user-certificates', help='add  in apk to accept user certificates', action='store_true')
+    parser.add_argument('-w', '--wait-before-repackage', help='Waits for your OK before repackaging the apk', action='store_true')
+    parser.add_argument('-k', '--keystore-path', help='Path of keystore to use', action='store_true')
+    parser.add_argument('-o', '--output-file', required=True, help='output patched apk')
 
     args = parser.parse_args()
-
-    if len(sys.argv) == 1:
-        parser.print_help()
-
-        return 1
 
     if args.verbosity:
         patcher.set_verbosity(int(args.verbosity))
@@ -871,21 +838,11 @@ def main():
 
         return 0
 
-    if not args.apk:
-        parser.print_help()
-
-        return 1
-
-    else:
-        if not os.path.isfile(args.apk):
-            patcher.print_warn("The file {0} couldn't be found!".format(args.apk))
-
-            return 1
+    if not os.path.isfile(args.apk):
+        raise RuntimeError("The file {0} couldn't be found!".format(args.apk))
 
     if not patcher.has_satisfied_dependencies('all'):
-        patcher.print_warn('One or more dependencies were not satisfied.')
-
-        return 1
+        raise RuntimeError('One or more dependencies were not satisfied.')
 
     gadget_to_use = None
     if not args.prevent_frida_gadget:
@@ -979,16 +936,13 @@ def main():
             patcher.print_info('Executing -> {0}'.format(command_to_execute))
             os.system(command_to_execute)
 
+    # here use buildapp instead
     output_file_path = patcher.repackage_apk(temporary_path, apk_file_name, target_file=args.output_file, use_aapt2=args.use_aapt2)
-
     patcher.sign_and_zipalign(output_file_path, args.keep_keystore)
 
     patcher.print_done('The temporary folder was not deleted. Find it at {0}'.format(temporary_path))
     patcher.print_done('Your file is located at {0}.'.format(output_file_path))
 
-    return 0
-
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
     main()
