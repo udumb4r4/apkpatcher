@@ -471,7 +471,7 @@ class Patcher:
                 new_content += content[tmp_index:]
 
         # The newContent is ready to be saved
-        
+
         with open(entrypoint_smali_path, 'w') as smali_file:
             smali_file.write(new_content)
 
@@ -613,7 +613,7 @@ class Patcher:
         apktool_build_cmd = ['apktool', 'b', '-o', target_file, base_apk_path]
         if use_aapt2:
             apktool_build_cmd.insert(1, "--use-aapt2") # apktool --use-aapt2 b ...
-        
+
         subprocess.check_output(apktool_build_cmd)
 
         return target_file
@@ -835,8 +835,6 @@ def main():
     parser.add_argument('-v', '--verbosity', help='Verbosity level (0 to 3). Default is 3')
     parser.add_argument('--update-gadgets', help='Update frida-gadgets', action='store_true')
     parser.add_argument('-f', '--force-extract-resources', help='Force extract resources and manifest',
-                        action='store_true')
-    parser.add_argument('--use-aapt2', help='Use aapt2 with apktool',
                         action='store_true')
 
     parser.add_argument('-e', '--enable-user-certificates', help='Add some configs in apk to accept user certificates',
