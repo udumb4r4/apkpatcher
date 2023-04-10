@@ -1,8 +1,8 @@
 import os
 import sys
 import json
+import lzma
 import time
-import signal
 import shutil
 import os.path
 import argparse
@@ -11,43 +11,18 @@ import tempfile
 import subprocess
 
 
-# noinspection SpellCheckingInspection
-class BColors:
-    COLOR_BLUE = '\033[94m'
-    COLOR_RED_BG = '\033[101m'
-    COLOR_RED = '\033[91m'
-    COLOR_GREEN = '\033[92m'
-    COLOR_BOLD = '\033[1m'
-    COLOR_ENDC = '\033[0m'
-
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-# noinspection PyBroadException,SpellCheckingInspection
 class Patcher:
     apk_file_path = None
     apk_tmp_dir = None
-
-    VERBOSITY_LOW = 1   # only 'error' and 'done' messages
-    VERBOSITY_MID = 2   # 'adding' messages too
-    VERBOSITY_HIGH = 3  # all messages
-    VERBOSITY = VERBOSITY_LOW
 
     ARCH_ARM = 'arm'
     ARCH_ARM64 = 'arm64'
     ARCH_X86 = 'x86'
     ARCH_X64 = 'x64'
 
-    DEFAULT_GADGET_NAME = 'libfrida-gadget.so'
-    DEFAULT_CONFIG_NAME = 'libfrida-gadget.config.so'
-    DEFAULT_HOOKFILE_NAME = 'libhook.js.so'
+    HOOKFILE_NAME = 'libhook.js.so'
+    GADGET_FILE_NAME = 'libfrida-gadget.so'
+    CONFIG_FILE_NAME = 'libfrida-gadget.config.so'
 
     CONFIG_BIT = 1 << 0
     AUTOLOAD_BIT = 1 << 1
@@ -57,24 +32,13 @@ class Patcher:
     def __init__(self, apk_file_path=None):
         self.apk_file_path = apk_file_path
 
-    def set_verbosity(self, verbosity_level):
-        self.VERBOSITY = verbosity_level
-
-    def print_info(self, msg):
-        if self.VERBOSITY >= self.VERBOSITY_HIGH:
-            sys.stdout.write(BColors.COLOR_BLUE + '[*] {0}\n'.format(msg) + BColors.ENDC)
-
-    def print_done(self, msg):
-        if self.VERBOSITY >= self.VERBOSITY_LOW:
-            sys.stdout.write(BColors.COLOR_GREEN + '[+] {0}\n'.format(msg) + BColors.ENDC)
-
-    def print_warn(self, msg):
-        if self.VERBOSITY >= self.VERBOSITY_LOW:
-            sys.stdout.write(BColors.COLOR_RED + '[-] {0}\n'.format(msg) + BColors.ENDC)
+    @staticmethod
+    def print_message(msg):
+        print('[*]', msg)
 
     def has_satisfied_dependencies(self, action='all'):
         flag = True
-        self.print_info('Checking dependencies...')
+        self.print_message('Checking dependencies...')
 
         # Check Frida
         try:
@@ -153,7 +117,7 @@ class Patcher:
             return False
 
         frida_version = subprocess.check_output(['frida', '--version']).decode('utf-8').strip()
-        self.print_info('Updating frida gadgets according to your frida version: {0}'.format(frida_version))
+        self.print_message('Updating frida gadgets according to your frida version: {0}'.format(frida_version))
 
         github_link = 'https://api.github.com/repos/frida/frida/releases'
 
@@ -193,15 +157,18 @@ class Patcher:
             gadget_file_path = os.path.join(target_folder, gadget['name'])
 
             if os.path.isfile(gadget_file_path.replace('.xz', '')):
-                self.print_info('{0} already exists. Skipping.'.format(gadget['name']))
+                self.print_message('{0} already exists. Skipping.'.format(gadget['name']))
             else:
                 self.download_file(gadget['url'], gadget_file_path)
                 downloaded_files.append(gadget_file_path)
 
-        self.print_info('Extracting downloaded files...')
+        self.print_message('Extracting downloaded files...')
 
+        # TODO: export to func ("unxz_file")
         for downloaded_file in downloaded_files:
-            subprocess.check_output(['unxz', downloaded_file])
+            with open(downloaded_file.replace('.xz', ''), 'wb') as extracted_file:
+                with lzma.open(downloaded_file) as extracted_buffer:
+                    extracted_file.write(extracted_buffer.read())
 
         self.print_done('Done! Gadgets were updated')
 
@@ -241,12 +208,12 @@ class Patcher:
     def get_recommended_gadget(self):
         ret = None
 
-        self.print_info('Trying to identify the right frida-gadget...')
-        self.print_info('Waiting for device...')
+        self.print_message('Trying to identify the right frida-gadget...')
+        self.print_message('Waiting for device...')
         os.system('adb wait-for-device')
         abi = subprocess.check_output(['adb', 'shell', 'getprop ro.product.cpu.abi']).decode('utf-8').strip()
 
-        self.print_info('The abi is {0}'.format(abi))
+        self.print_message('The abi is {0}'.format(abi))
 
         frida_version = subprocess.check_output(['frida', '--version']).strip().decode('utf-8')
         current_folder = os.path.dirname(os.path.abspath(__file__))
@@ -291,28 +258,28 @@ class Patcher:
         if ret is None:
             self.print_warn('No recommended gadget file was found.')
         else:
-            self.print_info('Architecture identified ({0}). Gadget was selected.' .format(abi))
+            self.print_message('Architecture identified ({0}). Gadget was selected.' .format(abi))
 
         return ret
 
     def extract_apk(self, apk_path, destination_path, extract_resources=True):
         if extract_resources:
-            self.print_info('Extracting {0} (with resources) to {1}'.format(apk_path, destination_path))
-            self.print_info('Some errors may occur while decoding resources that have framework dependencies')
+            self.print_message('Extracting {0} (with resources) to {1}'.format(apk_path, destination_path))
+            self.print_message('Some errors may occur while decoding resources that have framework dependencies')
 
             subprocess.check_output(['apktool', '-f', 'd', '-o', destination_path, apk_path])
         else:
-            self.print_info('Extracting {0} (without resources) to {1}'.format(apk_path, destination_path))
+            self.print_message('Extracting {0} (without resources) to {1}'.format(apk_path, destination_path))
             subprocess.check_output(['apktool', '-f', '-r', 'd', '-o', destination_path, apk_path])
 
     def has_permission(self, apk_path, permission_name):
         permissions = subprocess.check_output(['aapt', 'dump', 'permissions', apk_path]).decode('utf-8')
 
         if permission_name in permissions:
-            self.print_info('The app {0} has the permission "{1}"'.format(apk_path, permission_name))
+            self.print_message('The app {0} has the permission "{1}"'.format(apk_path, permission_name))
             return True
         else:
-            self.print_info("The app {0} doesn't have the permission '{1}'".format(apk_path, permission_name))
+            self.print_message("The app {0} doesn't have the permission '{1}'".format(apk_path, permission_name))
             return False
 
     def get_entrypoint_class_name(self, apk_path):
@@ -347,7 +314,7 @@ class Patcher:
         if entrypoint_final_path is None:
             self.print_warn('Couldn\'t find the application entrypoint')
         else:
-            self.print_info('Found application entrypoint at {0}'.format(entrypoint_final_path))
+            self.print_message('Found application entrypoint at {0}'.format(entrypoint_final_path))
 
         return entrypoint_final_path
 
@@ -360,7 +327,7 @@ class Patcher:
         final_tmp_dir = os.path.join(apkpatcher_tmp_dir, apk_name.replace('.apk', '').replace('.', '_'))
 
         if os.path.isdir(final_tmp_dir):
-            self.print_info('App temp dir already exists. Removing it...')
+            self.print_message('App temp dir already exists. Removing it...')
             shutil.rmtree(final_tmp_dir)
 
         os.makedirs(final_tmp_dir)
@@ -392,7 +359,7 @@ class Patcher:
             content = smali_file.read()
 
             if 'frida-gadget' in content:
-                self.print_info('The frida-gadget is already in the entrypoint. Skipping...')
+                self.print_message('The frida-gadget is already in the entrypoint. Skipping...')
                 return False
 
             direct_methods_start_index = content.find('# direct methods')
@@ -471,7 +438,7 @@ class Patcher:
         with open(entrypoint_smali_path, 'w') as smali_file:
             smali_file.write(new_content)
 
-        self.print_info('Frida loader was injected in the entrypoint smali file!')
+        self.print_message('Frida loader was injected in the entrypoint smali file!')
 
         return True
 
@@ -499,7 +466,7 @@ class Patcher:
         libs_path = os.path.join(base_path, 'lib/')
 
         if not os.path.isdir(libs_path):
-            self.print_info('There is no "lib" folder. Creating...')
+            self.print_message('There is no "lib" folder. Creating...')
             os.makedirs(libs_path)
 
         if arch == self.ARCH_ARM:
@@ -520,12 +487,12 @@ class Patcher:
             return []
 
         if not os.path.isdir(sub_dir):
-            self.print_info('Creating folder {0}'.format(sub_dir))
+            self.print_message('Creating folder {0}'.format(sub_dir))
             os.makedirs(sub_dir)
 
         if arch == self.ARCH_ARM:
             if not os.path.isdir(sub_dir_2):
-                self.print_info('Creating folder {0}'.format(sub_dir_2))
+                self.print_message('Creating folder {0}'.format(sub_dir_2))
                 os.makedirs(sub_dir_2)
 
         if arch == self.ARCH_ARM:
@@ -535,19 +502,19 @@ class Patcher:
             return [sub_dir]
 
     def delete_existing_gadget(self, arch_folder, delete_custom_files=0):
-        gadget_path = os.path.join(arch_folder, self.DEFAULT_GADGET_NAME)
+        gadget_path = os.path.join(arch_folder, self.GADGET_FILE_NAME)
 
         if os.path.isfile(gadget_path):
             os.remove(gadget_path)
 
         if delete_custom_files & self.CONFIG_BIT:
-            config_file_path = os.path.join(arch_folder, self.DEFAULT_CONFIG_NAME)
+            config_file_path = os.path.join(arch_folder, self.CONFIG_FILE_NAME)
 
             if os.path.isfile(config_file_path):
                 os.remove(config_file_path)
 
         if delete_custom_files & self.AUTOLOAD_BIT:
-            hookfile_path = os.path.join(arch_folder, self.DEFAULT_HOOKFILE_NAME)
+            hookfile_path = os.path.join(arch_folder, self.HOOKFILE_NAME)
 
             if os.path.isfile(hookfile_path):
                 os.remove(hookfile_path)
@@ -573,22 +540,22 @@ class Patcher:
             else:
                 self.delete_existing_gadget(folder, delete_custom_files=0)
 
-            target_gadget_path = os.path.join(folder, self.DEFAULT_GADGET_NAME)
+            target_gadget_path = os.path.join(folder, self.GADGET_FILE_NAME)
 
-            self.print_info('Copying gadget to {0}'.format(target_gadget_path))
+            self.print_message('Copying gadget to {0}'.format(target_gadget_path))
 
             shutil.copyfile(gadget_path, target_gadget_path)
 
             if config_file_path:
                 target_config_path = target_gadget_path.replace('.so', '.config.so')
 
-                self.print_info('Copying config file to {0}'.format(target_config_path))
+                self.print_message('Copying config file to {0}'.format(target_config_path))
                 shutil.copyfile(config_file_path, target_config_path)
 
             if auto_load_script_path:
-                target_autoload_path = target_gadget_path.replace(self.DEFAULT_GADGET_NAME, self.DEFAULT_HOOKFILE_NAME)
+                target_autoload_path = target_gadget_path.replace(self.GADGET_FILE_NAME, self.HOOKFILE_NAME)
 
-                self.print_info('Copying auto load script file to {0}'.format(target_autoload_path))
+                self.print_message('Copying auto load script file to {0}'.format(target_autoload_path))
                 shutil.copyfile(auto_load_script_path, target_autoload_path)
 
         return True
@@ -603,8 +570,8 @@ class Patcher:
                 new_file_name = target_file.replace('.apk', '_{0}.apk'.format(timestamp))
                 target_file = new_file_name
 
-        self.print_info('Repackaging apk to {0}'.format(target_file))
-        self.print_info('This may take some time...')
+        self.print_message('Repackaging apk to {0}'.format(target_file))
+        self.print_message('This may take some time...')
 
         apktool_build_cmd = ['apktool', 'b', '-o', target_file, base_apk_path]
         if use_aapt2:
@@ -619,14 +586,14 @@ class Patcher:
 
         # Probably this if statement will never be reached
         if not os.path.isdir(res_path):
-            self.print_info('Resources path not found. Creating one...')
+            self.print_message('Resources path not found. Creating one...')
 
             os.makedirs(res_path)
 
         xml_path = os.path.join(res_path, 'xml')
 
         if not os.path.isdir(xml_path):
-            self.print_info('res/xml path not found. Creating one...')
+            self.print_message('res/xml path not found. Creating one...')
 
             os.makedirs(xml_path)
 
@@ -656,10 +623,10 @@ class Patcher:
 
             netsec_file.write(security_content)
 
-        self.print_info('The network_security_config.xml file was created!')
+        self.print_message('The network_security_config.xml file was created!')
 
     def inject_user_certificates_label(self, base_dir):
-        self.print_info('Injecting Network Security label to accept user certificates...')
+        self.print_message('Injecting Network Security label to accept user certificates...')
 
         manifest_path = os.path.join(base_dir, 'AndroidManifest.xml')
 
@@ -681,7 +648,7 @@ class Patcher:
         with open(manifest_path, 'w') as manifest_file:
             manifest_file.write(new_manifest)
 
-        self.print_info('The Network Security label was added!')
+        self.print_message('The Network Security label was added!')
 
     def has_user_certificates_label(self, base_path):
         manifest_path = os.path.join(base_path, 'AndroidManifest.xml')
@@ -705,7 +672,7 @@ class Patcher:
         self.create_security_config_xml(base_path)
 
     def inject_permission_manifest(self, base_dir, permission):
-        self.print_info('Injecting permission {0} in Manifest...'.format(permission))
+        self.print_message('Injecting permission {0} in Manifest...'.format(permission))
 
         permission_tag = '<uses-permission android:name="{0}"/>'.format(permission)
         manifest_path = os.path.join(base_dir, 'AndroidManifest.xml')
@@ -744,14 +711,14 @@ class Patcher:
 
     def sign_and_zipalign(self, apk_path, keep_keystore):
         if not os.path.isfile("apkpatcherkeystore"):
-            self.print_info('Generating a random key...')
+            self.print_message('Generating a random key...')
             subprocess.call(
                 'keytool -genkey -keyalg RSA -keysize 2048 -validity 700 -noprompt -alias apkpatcheralias1 -dname '
                 '"CN=apk.patcher.com, OU=ID, O=APK, L=Patcher, S=Patch, C=BR" -keystore apkpatcherkeystore '
                 '-storepass password -keypass password 2> /dev/null',
                 shell=True)
 
-        self.print_info('Signing the patched apk...')
+        self.print_message('Signing the patched apk...')
         subprocess.call(
             'jarsigner -sigalg SHA1withRSA -digestalg SHA1 -keystore apkpatcherkeystore '
             '-storepass password {0} apkpatcheralias1 >/dev/null 2>&1'.format(apk_path),
@@ -760,8 +727,8 @@ class Patcher:
         if not keep_keystore:
             os.remove('apkpatcherkeystore')
 
-        self.print_info('The apk was signed!')
-        self.print_info('Optimizing with zipalign...')
+        self.print_message('The apk was signed!')
+        self.print_message('Optimizing with zipalign...')
 
         tmp_target_file = apk_path.replace('.apk', '_tmp.apk')
         shutil.move(apk_path, tmp_target_file)
@@ -770,7 +737,7 @@ class Patcher:
 
         os.remove(tmp_target_file)
 
-        self.print_info('The file was optimized!')
+        self.print_message('The file was optimized!')
 
     @staticmethod
     def get_int_frida_version(str_version):
@@ -912,7 +879,7 @@ def main():
     apk_file_name = apk_file_path.split('/')[-1]
 
     if args.wait_before_repackage:
-        patcher.print_info('Apkpatcher is waiting for your OK to repackage the apk...')
+        patcher.print_message('Apkpatcher is waiting for your OK to repackage the apk...')
 
         answer = input(BColors.COLOR_BLUE + '[*] Are you ready? (y/N): ' + BColors.ENDC)
 
@@ -933,7 +900,7 @@ def main():
         answer = input(BColors.COLOR_RED + '[!] Are you sure you want to execute it? (y/N) ' + BColors.ENDC)
 
         if answer.lower() == 'y':
-            patcher.print_info('Executing -> {0}'.format(command_to_execute))
+            patcher.print_message('Executing -> {0}'.format(command_to_execute))
             os.system(command_to_execute)
 
     # here use buildapp instead
