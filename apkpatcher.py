@@ -16,10 +16,10 @@ class Patcher:
     apk_file_path = None
     apk_tmp_dir = None
 
-    ARCH_ARM = 'arm'
-    ARCH_ARM64 = 'arm64'
     ARCH_X86 = 'x86'
     ARCH_X64 = 'x64'
+    ARCH_ARM = 'arm'
+    ARCH_ARM64 = 'arm64'
 
     HOOKFILE_NAME = 'libhook.js.so'
     GADGET_FILE_NAME = 'libfrida-gadget.so'
