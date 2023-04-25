@@ -3,18 +3,18 @@ import json
 import lzma
 import time
 import shutil
-import os.path
 import argparse
 import requests
 import tempfile
 import buildapp
 import subprocess
+from typing import List
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 class Patcher:
-    apk_file_path = None
     apk_tmp_dir = None
+    apk_file_path = None
 
     ARCH_X86 = 'x86'
     ARCH_X64 = 'x64'
@@ -34,51 +34,18 @@ class Patcher:
     def print_message(msg):
         print('[*]', msg)
 
-    def has_satisfied_dependencies(self):
-        flag = True
-        self.print_message('Checking dependencies...')
+    @staticmethod
+    def extract_xz_files(paths: List[Path]):
+        for file_path in paths:
+            with open(file_path.replace('.xz', ''), 'wb') as extracted_file:
+                with lzma.open(file_path) as extracted_buffer:
+                    extracted_file.write(extracted_buffer.read())
 
-        try:
-            subprocess.check_output(['aapt', 'version'])
-        except Exception:
-            flag = False
-            self.print_warn('aapt is not installed')
+                file_path.unlink()
 
-        try:
-            subprocess.check_output(['adb', '--version'])
-        except Exception:
-            flag = False
-            self.print_warn('adb is not installed')
-
-        try:
-            subprocess.check_output(['apktool', '--version'])
-        except Exception:
-            self.print_warn('Apktool is not installed')
-            flag = False
-
-        try:
-            # TODO: is needed?
-            cmd_output = subprocess.check_output(['keytool'], stderr=subprocess.STDOUT, shell=True)
-        except Exception:
-            flag = False
-            self.print_warn('keytool is not installed')
-
-        try:
-            # TODO
-            subprocess.check_output(['apksigner', '--version'], stderr=subprocess.STDOUT)
-        except Exception:
-            flag = False
-            self.print_warn('apksigner is not installed')
-
-        try:
-            # TODO
-            subprocess.check_output(['zipalign'],
-                stderr=subprocess.STDOUT, shell=True)
-        except Exception:
-            flag = False
-            self.print_warn('zipalign is not installed')
-
-        return flag
+    @staticmethod
+    def run_command(cmdline):
+        pass
 
     def update_apkpatcher_gadgets(self):
         if not self.has_satisfied_dependencies():
@@ -139,7 +106,7 @@ class Patcher:
                 with lzma.open(downloaded_file) as extracted_buffer:
                     extracted_file.write(extracted_buffer.read())
 
-        self.print_done('Done! Gadgets were updated')
+        self.print_message('Done! Gadgets were updated')
         return True
 
     def download_file(self, url, target_path):
@@ -228,20 +195,20 @@ class Patcher:
 
     def get_entrypoint_class_name(self, apk_path):
         dump_lines = subprocess.check_output(['aapt', 'dump', 'badging', apk_path]).decode('utf-8').split('\n')
-        entrypoint_class = None
 
         for line in dump_lines:
             if 'launchable-activity:' in line:
                 name_start = line.find('name=')
-                entrypoint_class = line[name_start:].split(' ')[0]\
-                    .replace('name=', '').replace('\'', '').replace('"', '')
 
-                break
+                return (
+                    line[name_start:]
+                    .split(' ')[0]
+                    .replace('name=', '')
+                    .replace('\'', '')
+                    .replace('"', '')
+                )
 
-        if entrypoint_class is None:
-            self.print_warn('Something was wrong while getting launchable-activity')
-
-        return entrypoint_class
+        self.print_warn('Something was wrong while getting launchable-activity')
 
     def get_entrypoint_smali_path(self, base_path, entrypoint_class):
         files_at_path = os.listdir(base_path)
@@ -514,28 +481,11 @@ class Patcher:
         netsec_path = os.path.join(xml_path, 'network_security_config.xml')
 
         if os.path.isfile(netsec_path):
-            self.print_warn('The network_security_config.xml file already exists!')
-            self.print_warn('I will try to delete it and create a new one. This can introduce some bug!')
-
-            with open(netsec_path, 'r') as netsec_file:
-                contents = netsec_file.read()
-                self.print_warn('Original network_security_config.xml file content:\n{0}'.format(contents))
-
             os.remove(netsec_path)
 
         with open(netsec_path, 'w') as netsec_file:
-            security_content = '''<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-<base-config cleartextTrafficPermitted="true">
-    <trust-anchors>
-        <certificates src="system" />
-        <certificates src="user" />
-    </trust-anchors>
-</base-config>
-</network-security-config>
-            '''
-
-            netsec_file.write(security_content)
+            SECURITY_CONTENT = '<?xml version="1.0" encoding="utf-8"?>\n<network-security-config><base-config cleartextTrafficPermitted="true"><trust-anchors><certificates src="system" /><certificates src="user" /></trust-anchors></base-config></network-security-config>'
+            netsec_file.write(SECURITY_CONTENT)
 
         self.print_message('The network_security_config.xml file was created!')
 
