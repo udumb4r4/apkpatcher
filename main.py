@@ -72,18 +72,20 @@ def find_app_entry_point(manifest_file): # TODO: test & refactor
     activity_elem = None
     for elem in root.iter('activity'):
         intent_filter = elem.find('intent-filter')
+
         if intent_filter is not None:
             action_elem = intent_filter.find('action')
             category_elem = intent_filter.find('category')
-            if (action_elem is not None and action_elem.attrib.get('name') == 'android.intent.action.MAIN' and
-                    category_elem is not None and category_elem.attrib.get('name') == 'android.intent.category.LAUNCHER'):
+
+            if (not action_elem) or (not category_elem):
+                continue
+
+            if (action_elem.attrib.get('name') == 'android.intent.action.MAIN') and (category_elem.attrib.get('name') == 'android.intent.category.LAUNCHER'):
                 activity_elem = elem
                 break
 
-    if activity_elem is not None:
+    if activity_elem:
         return activity_elem.attrib.get('name')
-    else:
-        return None
 
 
 def parse_arguments():
@@ -102,21 +104,22 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    # TODO: apktool d args.apk -o tempfolder
+
     with decompiled_context(args.apk) as smali_folder:
         manifest_path = smali_folder / 'AndroidManifest.xml'
 
         with open(manifest_path, 'r') as manifest_file:
             manifest_xml = manifest_file.read()
 
-        manifest_xml = add_internet_permission(manifest_xml) # TODO: manifest inject android.permission.INTERNET if not existing
-        manifest_xml = allow_native_libs_extraction(manifest_xml) # TODO: manifest inject extractNative="true"
+        manifest_xml = add_internet_permission(manifest_xml)
+        manifest_xml = allow_native_libs_extraction(manifest_xml)
 
         with open(manifest_path, 'w') as manifest_file:
             manifest_file.write(manifest_xml)
 
-        gadget = FridaGadget(args.update_gadgets, args.gadget) # TODO: obtain frida-gadget files (import `frida-gadget`)
-        gadget.add_gadget_libs(smali_folder, Path(args.script)) # TODO: create lib/<arch>/ folders with gadget and scripts
+        gadget = FridaGadget(args.update_gadgets, args.gadget)
+        gadget.add_gadget_libs(smali_folder, Path(args.script))
+
         # TODO: app-entry-point inject LoadLibrary
 
         if args.wait_before_repackage:
