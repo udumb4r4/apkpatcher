@@ -58,8 +58,25 @@ class FridaGadget:
 
     @staticmethod
     def __get_gadget_arch(gadget_path: Path):
-        # TODO:
-        return 'asasd'
+        KNOWN_ABIS = {
+            'x86': 'x86',
+            'x86_64': 'x86_64',
+            'arm': 'armeabi-v7a',
+            'arm64': 'arm64-v8a'
+        }
+
+        pattern = r".*android-(.+)\.so"
+        match = re.search(pattern, gadget_path.name)
+
+        if not match:
+            raise Exception('Frida gadget path does not meet naming convention (.*android-<processor>.so)')
+
+        arch_abi_name = KNOWN_ABIS.get(match.group(1))
+
+        if not arch_abi_name:
+            raise Exception('Can not find gadget ABI name')
+
+        return arch_abi_name
 
     @staticmethod
     def __write_libs(arch_lib_folder: Path, gadget_path: Path, script_path: Path):
