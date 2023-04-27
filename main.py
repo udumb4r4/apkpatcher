@@ -47,7 +47,7 @@ def main():
         manifest_path = smali_folder / 'AndroidManifest.xml'
         manifest = AndroidManifest(manifest_path)
 
-        manifest.add_internet_permission()
+        manifest.allow_internet_permission()
         manifest.allow_native_libs_extraction()
 
         entry_point = manifest.find_app_entry_point()
