@@ -21,9 +21,9 @@ class ActivitySmaliInjector:
         )
 
         if class_constructor_start_index == -1:
-            self.__patch_activity_without_class_constructor(activity_content, code_to_inject)
+            self.__patch_activity_without_class_constructor(code_to_inject)
         else:
-            self.__patch_activity_with_class_constructor(activity_content, code_to_inject)
+            self.__patch_activity_with_class_constructor(code_to_inject)
 
     def __patch_activity_without_class_constructor(self, injected_code: str):
         main_activity_loader = '''
