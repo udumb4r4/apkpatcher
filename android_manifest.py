@@ -3,52 +3,39 @@ import xml.etree.ElementTree as ET
 
 
 class AndroidManifest:
-    NATIVE_PERMISSION = 'android.app.extractNativeLibs'
-    INTERNET_PERMISSION = 'android.permission.INTERNET'
-
     def __init__(self, manifest_path: Path):
         self.__manifest_path = manifest_path
+        self.__android_schema = AndroidManifest.__find_android_schema(manifest_path)
 
-    def add_internet_permission(self): # TODO: test & refactor
+        ET.register_namespace('android', self.__android_schema)
+
+    def allow_internet_permission(self):
+        INTERNET_PERMISSION = 'android.permission.INTERNET'
         root = ET.fromstring(self.__get_content())
 
-        internet_perm = None
-        for elem in root.iter('uses-permission'):
-            if elem.attrib.get('name') == AndroidManifest.INTERNET_PERMISSION:
-                internet_perm = elem
-                break
+        for permission in root.iter('uses-permission'):
+            if INTERNET_PERMISSION in permission.attrib.values():
+                return
 
-        if internet_perm is None:
-            internet_perm = ET.Element('uses-permission', {'name': AndroidManifest.INTERNET_PERMISSION})
-            root.insert(0, internet_perm)
+        internet_perm = ET.Element('uses-permission', {f'{{{self.__android_schema}}}name': INTERNET_PERMISSION})
+        root.insert(0, internet_perm)
 
-        self.__set_content(ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8'))
+        self.__set_content(ET.tostring(root))
 
-    def allow_native_libs_extraction(self):  # TODO: test & refactor
+    def allow_native_libs_extraction(self):
+        NATIVE_PERMISSION = 'extractNativeLibs'
         root = ET.fromstring(self.__get_content())
+
         application_elem = root.find('application')
 
-        if application_elem is None:
-            application_elem = ET.Element('application')
-            root.append(application_elem)
+        if not application_elem:
+            raise Exception('Manifest got no application tag')
 
-        extract_native_libs_meta = None
-        for elem in application_elem.iter('meta-data'):
-            if elem.attrib.get('name') == AndroidManifest.NATIVE_PERMISSION:
-                extract_native_libs_meta = elem
-                break
-
-        if extract_native_libs_meta is None:
-            extract_native_libs_meta = ET.Element('meta-data', {'name': AndroidManifest.NATIVE_PERMISSION, 'value': 'true'})
-            application_elem.append(extract_native_libs_meta)
-        else:
-            extract_native_libs_meta.attrib['value'] = 'true'
-
-        self.__set_content(ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8'))
+        application_elem.set(f'{{{self.__android_schema}}}{NATIVE_PERMISSION}', 'true')
+        self.__set_content(ET.tostring(root))
 
     def find_app_entry_point(self) -> str: # TODO: test & refactor
-        tree = ET.parse(self.__get_content())
-        root = tree.getroot()
+        root = ET.fromstring(self.__get_content())
 
         activity_elem = None
         for elem in root.iter('activity'):
@@ -76,6 +63,14 @@ class AndroidManifest:
         with open(self.__manifest_path, 'r') as manifest_file:
             return manifest_file.read()
 
-    def __set_content(self, xml_content: str):
-        with open(self.__manifest_path, 'w') as manifest_file:
+    def __set_content(self, xml_content: bytes):
+        with open(self.__manifest_path, 'wb') as manifest_file:
             manifest_file.write(xml_content)
+
+    @staticmethod
+    def __find_android_schema(manifest_path: Path) -> str:
+        with open(manifest_path, 'r') as manifest_file:
+            manifest = ET.parse(manifest_file)
+
+        permission_elem = next(manifest.getroot().iter('uses-permission'))
+        return list(permission_elem.attrib.keys())[0].split('{')[1].split('}')[0]
