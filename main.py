@@ -2,10 +2,10 @@ import argparse
 import buildapp
 import subprocess
 from pathlib import Path
-from frida_gadget import FridaGadget
+from frida_gadget_util import FridaGadget
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from android_manifest import AndroidManifest
+from android_manifest_util import AndroidManifest
 
 
 @contextmanager
