@@ -56,9 +56,9 @@ def main():
         main_activity_injector.inject_to_activity(FridaGadgetManager.INJECTION_SMALI_CODE)
 
         if args.wait_before_repackage:
-            input(f'About to repackage {smali_folder}!\nPress enter to continue...')
+            input(f'About to repackage {smali_folder}\nPress enter to continue...')
 
-        buildapp.build_app(args.output_file, smali_folder, args.keystore_path, args.install_after_build)
+        buildapp.build_app(args.output_file, smali_folder, args.keystore, args.install)
 
 
 if __name__ == '__main__':
