@@ -26,9 +26,6 @@ class AndroidManifestPatcher:
         root = ET.fromstring(self.__get_content())
         application_elem = root.find('application')
 
-        if not application_elem:
-            raise Exception('Manifest got no application tag')
-
         native_permission = f'{{{self.__android_schema}}}extractNativeLibs'
         application_elem.attrib.pop(native_permission, None)
         application_elem.attrib[native_permission] = 'true'
@@ -38,9 +35,6 @@ class AndroidManifestPatcher:
     def find_app_entry_point(self) -> str:
         root = ET.fromstring(self.__get_content())
         application_elem = root.find('application')
-
-        if not application_elem:
-            raise Exception('Manifest got no application tag')
 
         for activity in application_elem.iter('activity'):
             for intent_filter in activity.iter('intent-filter'):
@@ -74,5 +68,14 @@ class AndroidManifestPatcher:
         with open(manifest_path, 'r') as manifest_file:
             manifest = ET.parse(manifest_file)
 
-        permission_elem = next(manifest.getroot().iter('uses-permission'))
-        return list(permission_elem.attrib.keys())[0].split('{')[1].split('}')[0]
+        root = manifest.getroot()
+        application_elem = root.find('application')
+
+        if not application_elem:
+            raise Exception('Manifest got no application tag')
+
+        for icon_key in application_elem.attrib.keys():
+            if icon_key.startswith('{') and icon_key.endswith('}icon'):
+                return icon_key.split('{')[1].split('}')[0]
+
+        raise Exception('Couldn\'t find the icon key at AndroidManifest <application> tag')
