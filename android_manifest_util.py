@@ -17,7 +17,7 @@ class AndroidManifestPatcher:
             if INTERNET_PERMISSION in permission.attrib.values():
                 return
 
-        internet_perm = ET.Element('uses-permission', {'android:name': INTERNET_PERMISSION})
+        internet_perm = ET.Element('uses-permission', {f'{{{self.__android_schema}}}:name': INTERNET_PERMISSION})
         root.insert(0, internet_perm)
 
         self.__set_content(ET.tostring(root))
@@ -29,11 +29,10 @@ class AndroidManifestPatcher:
         if not application_elem:
             raise Exception('Manifest got no application tag')
 
-        NATIVE_PERMISSION = 'extractNativeLibs'
-        if application_elem.get(f'{{{self.__android_schema}}}{NATIVE_PERMISSION}') == 'true':
-            return
+        native_permission = f'{{{self.__android_schema}}}:extractNativeLibs'
+        application_elem.attrib.pop(native_permission, None)
+        application_elem.attrib[native_permission] = 'true'
 
-        application_elem.set(f'android:{NATIVE_PERMISSION}', 'true')
         self.__set_content(ET.tostring(root))
 
     def find_app_entry_point(self) -> str:
