@@ -6,10 +6,9 @@ This project started as a fork of [apkpatcher](https://github.com/badadaf/apkpat
 
 ## Installation
 After you made sure that all of the requirements are met, <br />
-You may install the package and use the cmdline tool `apkmod` <br />
+You may install the package and use the cmdline tool `apkmod`, which comes with the cmdline tool [`buildapp`](https://github.com/mon231/buildapp) <br />
 
-package isn't yet on py-pi, so you'll have to install it from github: <br />
-> pip install git+https://github.com/mon231/apkpatcher
+> pip install apkmod
 
 ## Patching process
 This tool gets an android app installation file (`.apk`) and a [frida js-script](https://frida.re/docs/javascript-api/) <br />
