@@ -8,16 +8,16 @@ from typing import Optional, Iterable
 
 
 class FridaGadgetManager:
-    def __init__(self, update_resources: bool = False, gadget_path: Optional[Path] = None):
+    def __init__(self, update_gadgets: bool = False, gadget_path: Optional[Path] = None):
+        if update_gadgets:
+            FridaGadgetManager.__download_latest_gadgets(DEFAULT_GADGETS_FOLDER)
+
         if gadget_path:
             self.__paths = [gadget_path]
             return
 
         DEFAULT_GADGETS_FOLDER = Path(expanduser('~/.frida-gadgets'))
         DEFAULT_GADGETS_FOLDER.mkdir(parents=True, exist_ok=True)
-
-        if update_resources:
-            FridaGadgetManager.__download_latest_gadgets(DEFAULT_GADGETS_FOLDER)
 
         self.__paths = list(FridaGadgetManager.__discover_folder_gadgets(DEFAULT_GADGETS_FOLDER))
 
