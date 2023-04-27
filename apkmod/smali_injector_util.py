@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class ActivitySmaliInjector:
     def __init__(self, sources_path: Path, activity_name: str):
         self.__activity_file = ActivitySmaliInjector.__find_activity_source_file(sources_path, activity_name)

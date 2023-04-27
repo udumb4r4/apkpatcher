@@ -4,9 +4,9 @@ import subprocess
 from pathlib import Path
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from frida_gadget_util import FridaGadgetManager
-from smali_injector_util import ActivitySmaliInjector
-from android_manifest_util import AndroidManifestPatcher
+from .frida_gadget_util import FridaGadgetManager
+from .smali_injector_util import ActivitySmaliInjector
+from .android_manifest_util import AndroidManifestPatcher
 
 
 @contextmanager
