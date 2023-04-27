@@ -41,7 +41,7 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    with decompiled_context(args.apk) as smali_folder:
+    with decompiled_context(Path(args.apk)) as smali_folder:
         gadget = FridaGadgetManager(args.update_gadgets, args.gadget)
         gadget.add_gadget_libs(smali_folder, Path(args.script))
 
