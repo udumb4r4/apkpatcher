@@ -26,13 +26,15 @@ class ActivitySmaliInjector:
             self.__patch_activity_with_class_constructor(code_to_inject)
 
     def __patch_activity_without_class_constructor(self, injected_code: str):
-        main_activity_loader = '''
-        .method static constructor <clinit>()V
-            .locals 1
-            .prologue
-            {0}
-            return-void
-        .end method'''.format(injected_code)
+        main_activity_loader = \
+'''
+.method static constructor <clinit>()V
+    .locals 1
+    .prologue
+    {0}
+    return-void
+.end method
+'''.format(injected_code)
 
         activity_content = self.__activity_file.read_text()
         loader_begin_index = self.__direct_methods_start + len('# direct methods') + 1
