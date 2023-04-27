@@ -13,7 +13,7 @@ from android_manifest_util import AndroidManifestPatcher
 def decompiled_context(apk_path: Path):
     with TemporaryDirectory() as decompiled_path:
         subprocess.run(
-            f'apktool d {apk_path.resolve()} -o {decompiled_path}',
+            f'apktool d -f {apk_path.resolve()} -o {decompiled_path}',
             shell=True,
             check=True,
             input='\n'.encode(),
