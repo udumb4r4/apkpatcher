@@ -8,6 +8,10 @@ from typing import Optional, Iterable
 
 
 class FridaGadgetManager:
+    INJECTION_SMALI_CODE = '''
+    const-string v0, "frida-gadget"
+    invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V'''
+
     def __init__(self, update_gadgets: bool = False, gadget_path: Optional[Path] = None):
         if update_gadgets:
             FridaGadgetManager.__download_latest_gadgets(DEFAULT_GADGETS_FOLDER)
