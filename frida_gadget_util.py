@@ -7,7 +7,7 @@ from os.path import expanduser
 from typing import Optional, Iterable
 
 
-class FridaGadget:
+class FridaGadgetManager:
     def __init__(self, update_resources: bool = False, gadget_path: Optional[Path] = None):
         if gadget_path:
             self.__paths = [gadget_path]
@@ -17,20 +17,20 @@ class FridaGadget:
         DEFAULT_GADGETS_FOLDER.mkdir(parents=True, exist_ok=True)
 
         if update_resources:
-            FridaGadget.__download_latest_gadgets(DEFAULT_GADGETS_FOLDER)
+            FridaGadgetManager.__download_latest_gadgets(DEFAULT_GADGETS_FOLDER)
 
-        self.__paths = list(FridaGadget.__discover_folder_gadgets(DEFAULT_GADGETS_FOLDER))
+        self.__paths = list(FridaGadgetManager.__discover_folder_gadgets(DEFAULT_GADGETS_FOLDER))
 
         if not self.__paths:
-            FridaGadget.__download_latest_gadgets(DEFAULT_GADGETS_FOLDER)
-            self.__paths = list(FridaGadget.__discover_folder_gadgets(DEFAULT_GADGETS_FOLDER))
+            FridaGadgetManager.__download_latest_gadgets(DEFAULT_GADGETS_FOLDER)
+            self.__paths = list(FridaGadgetManager.__discover_folder_gadgets(DEFAULT_GADGETS_FOLDER))
 
     def add_gadget_libs(self, decompiled_folder: Path, script_path: Path):
         for gadget_path in self.__paths:
-            arch_lib_folder = decompiled_folder / 'lib' / FridaGadget.__get_gadget_arch(gadget_path)
+            arch_lib_folder = decompiled_folder / 'lib' / FridaGadgetManager.__get_gadget_arch(gadget_path)
             arch_lib_folder.mkdir(parents=True, exist_ok=True)
 
-            FridaGadget.__write_libs(arch_lib_folder, gadget_path, script_path)
+            FridaGadgetManager.__write_libs(arch_lib_folder, gadget_path, script_path)
 
     @staticmethod
     def __discover_folder_gadgets(gadgets_folder: Path) -> Iterable[Path]:

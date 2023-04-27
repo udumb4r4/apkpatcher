@@ -2,10 +2,10 @@ import argparse
 import buildapp
 import subprocess
 from pathlib import Path
-from frida_gadget_util import FridaGadget
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from android_manifest_util import AndroidManifest
+from frida_gadget_util import FridaGadgetManager
+from android_manifest_util import AndroidManifestPatcher
 
 
 @contextmanager
@@ -41,11 +41,11 @@ def main():
     args = parse_arguments()
 
     with decompiled_context(args.apk) as smali_folder:
-        gadget = FridaGadget(args.update_gadgets, args.gadget)
+        gadget = FridaGadgetManager(args.update_gadgets, args.gadget)
         gadget.add_gadget_libs(smali_folder, Path(args.script))
 
         manifest_path = smali_folder / 'AndroidManifest.xml'
-        manifest = AndroidManifest(manifest_path)
+        manifest = AndroidManifestPatcher(manifest_path)
 
         manifest.allow_internet_permission()
         manifest.allow_native_libs_extraction()

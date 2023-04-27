@@ -2,10 +2,10 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 
-class AndroidManifest:
+class AndroidManifestPatcher:
     def __init__(self, manifest_path: Path):
         self.__manifest_path = manifest_path
-        self.__android_schema = AndroidManifest.__find_android_schema(manifest_path)
+        self.__android_schema = AndroidManifestPatcher.__find_android_schema(manifest_path)
 
         ET.register_namespace('android', self.__android_schema)
 
