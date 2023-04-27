@@ -5,9 +5,7 @@ import xml.etree.ElementTree as ET
 class AndroidManifestPatcher:
     def __init__(self, manifest_path: Path):
         self.__manifest_path = manifest_path
-        self.__android_schema = AndroidManifestPatcher.__find_android_schema(manifest_path)
-
-        ET.register_namespace('android', self.__android_schema)
+        ET.register_namespace('android', AndroidManifestPatcher.__find_android_schema(manifest_path))
 
     def allow_internet_permission(self):
         INTERNET_PERMISSION = 'android.permission.INTERNET'
@@ -17,7 +15,7 @@ class AndroidManifestPatcher:
             if INTERNET_PERMISSION in permission.attrib.values():
                 return
 
-        internet_perm = ET.Element('uses-permission', {f'{{{self.__android_schema}}}name': INTERNET_PERMISSION})
+        internet_perm = ET.Element('uses-permission', {f'android:name': INTERNET_PERMISSION})
         root.insert(0, internet_perm)
 
         self.__set_content(ET.tostring(root))
@@ -31,7 +29,7 @@ class AndroidManifestPatcher:
         if not application_elem:
             raise Exception('Manifest got no application tag')
 
-        application_elem.set(f'{{{self.__android_schema}}}{NATIVE_PERMISSION}', 'true')
+        application_elem.set(f'android:{NATIVE_PERMISSION}', 'true')
         self.__set_content(ET.tostring(root))
 
     def find_app_entry_point(self) -> str: # TODO: test & refactor
