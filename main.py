@@ -5,6 +5,7 @@ from pathlib import Path
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
 from frida_gadget_util import FridaGadgetManager
+from smali_injector_util import ActivitySmaliInjector
 from android_manifest_util import AndroidManifestPatcher
 
 
@@ -51,7 +52,8 @@ def main():
         manifest.allow_native_libs_extraction()
 
         entry_point = manifest.find_app_entry_point()
-        # TODO: app-entry-point inject LoadLibrary
+        main_activity_injector = ActivitySmaliInjector(smali_folder, entry_point)
+        main_activity_injector.inject_to_activity(FridaGadgetManager.INJECTION_SMALI_CODE)
 
         if args.wait_before_repackage:
             input(f'About to repackage {smali_folder}!\nPress enter to continue...')
