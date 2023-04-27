@@ -29,7 +29,7 @@ class AndroidManifestPatcher:
         if not application_elem:
             raise Exception('Manifest got no application tag')
 
-        native_permission = f'{{{self.__android_schema}}}:extractNativeLibs'
+        native_permission = f'{{{self.__android_schema}}}extractNativeLibs'
         application_elem.attrib.pop(native_permission, None)
         application_elem.attrib[native_permission] = 'true'
 
