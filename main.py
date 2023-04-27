@@ -27,10 +27,10 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--apk', required=True, help='apk to patch')
     parser.add_argument('-g', '--gadget', required=False, help='frida-gadget file')
-    parser.add_argument('-o', '--output-file', required=True, help='output patched apk')
     parser.add_argument('-s', '--script', required=True, help='js script to inject')
-    parser.add_argument('-i', '--install', action='store_true', help='adb install after build')
+    parser.add_argument('-o', '--output-file', required=True, help='output patched apk')
     parser.add_argument('-k', '--keystore', required=False, help='path of keystore to use')
+    parser.add_argument('-i', '--install', action='store_true', help='adb install after build')
     parser.add_argument('-u', '--update-gadgets', action='store_true', help='download newest gadgets from github')
     parser.add_argument('-w', '--wait-before-repackage', action='store_true', help='Waits for your OK before repackaging the apk')
 
