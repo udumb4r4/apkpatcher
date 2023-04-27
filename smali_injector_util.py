@@ -68,41 +68,62 @@ class ActivitySmaliInjector:
         )
 
         if class_constructor_prologue_index == -1:
-            no_prologue_case = True
-
-            locals_start_index = activity_content.find('.locals ',
-                                                class_constructor_start_index, class_constructor_end_index)
-
-        if no_prologue_case and locals_start_index == -1:
-            self.print_warn('Has class constructor. No prologue case, but no "locals 0" found.')
-            return False
-
-        locals_end_index = -1
-        if no_prologue_case:
-            locals_end_index = locals_start_index + len('locals X')
-
-        prologue_end_index = -1
-        if has_class_constructor and class_constructor_prologue_index > -1:
-            prologue_end_index = class_constructor_prologue_index + len('.prologue') + 1
-
-        if no_prologue_case:
-            new_content = activity_content[0:locals_end_index]
-
-            if activity_content[locals_end_index] == '0':
-                new_content += '1'
-            else:
-                new_content += activity_content[locals_end_index]
-
-            new_content += '\n\n    .prologue'
-            new_content += load_library_injection_code
-            new_content += activity_content[locals_end_index+1:]
-
-            self.__activity_file.write_text(new_content)
+            self.__patch_constructor_with_prologue(injected_code, class_constructor_start_index, class_constructor_end_index)
         else:
-            new_content = activity_content[0:prologue_end_index]
-            new_content += load_library_injection_code
-            new_content += activity_content[prologue_end_index:]
-            self.__activity_file.write_text(new_content)
+            self.__patch_constructor_with_locals(injected_code, class_constructor_start_index, class_constructor_end_index)
+
+    def __patch_constructor_with_prologue(self, injected_code: str, class_constructor_start_index: int, class_constructor_end_index: int):
+        activity_content = self.__activity_file.read_text()
+
+        prologue_start_index = activity_content.find(
+            '.prologue',
+            class_constructor_start_index,
+            class_constructor_end_index
+        )
+
+        if prologue_start_index == -1:
+            raise Exception('Error couldn\'t find class-constructor prologue')
+
+        prologue_end_index = activity_content.find('\n', prologue_start_index, class_constructor_end_index) - 1
+
+        if prologue_end_index == -1:
+            raise Exception('Error couldn\'t parse class-constructor post prologue')
+
+        new_content = activity_content[:prologue_end_index + 1]
+        new_content += f'\n{injected_code}\n'
+        new_content += activity_content[prologue_end_index + 1:]
+
+        self.__activity_file.write_text(new_content)
+
+    def __patch_constructor_with_locals(self, injected_code: str, class_constructor_start_index: int, class_constructor_end_index: int):
+        activity_content = self.__activity_file.read_text()
+
+        locals_start_index = activity_content.find(
+            '.locals ',
+            class_constructor_start_index,
+            class_constructor_end_index
+        )
+
+        if locals_start_index == -1:
+            raise Exception('Error couldn\'t find class-constructor locals')
+
+        locals_end_index = activity_content.find('\n', locals_start_index, class_constructor_end_index) - 1
+
+        if locals_end_index == -1:
+            raise Exception('Error couldn\'t parse class-constructor post locals')
+
+        new_content = activity_content[:locals_end_index]
+
+        if activity_content[locals_end_index] == '0':
+            new_content += '1'
+        else:
+            new_content += activity_content[locals_end_index]
+
+        new_content += '\n\t.prologue\n'
+        new_content += injected_code + '\n'
+        new_content += activity_content[locals_end_index+1:]
+
+        self.__activity_file.write_text(new_content)
 
     @staticmethod
     def __find_activity_source_file(sources_path: Path, activity_name: str) -> Path:
