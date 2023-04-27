@@ -1,17 +1,19 @@
 # apkpatcher
-Corss-Platform script used to inject frida scripts and gadget to an APK <br/>
-This project is a fork of original [apkpatcher](https://github.com/badadaf/apkpatcher) <br />
+Corss-Platform script used to inject frida scripts and gadget to an APK <br />
+This project started as a fork of [apkpatcher](https://github.com/badadaf/apkpatcher) <br />
 <br />
 *NOTE* that you should use this tool for debugging / educational purposes only!
 
 ## Installation
-WIP (will be a py-pkg)
+After you made sure that all of the requirements are met, <br />
+You may install the package and use the cmdline tool `apkmod` <br />
+
+package isn't yet on py-pi, so you'll have to install it from github: <br />
+> pip install git+https://github.com/mon231/apkpatcher
 
 ## Patching process
-Just change anything you want, native-elfs in `/lib` folder, [smali-code](https://source.android.com/docs/core/runtime/dalvik-bytecode) from smali folders, manifest file `AndroidManifest.xml`, resources, assets and whatever's out there
-
-
-And that's it! Now you have a new apk, waiting to be installed it on your android devices!
+This tool gets an android app installation file (`.apk`) and a [frida js-script](https://frida.re/docs/javascript-api/) <br />
+Then builds a new apk with frida-gadget & script runner ready to be installed on non-rooted android devices!
 
 ## Requirements
 The project assumes that installer already has the following tools in his path:
@@ -22,6 +24,3 @@ The project assumes that installer already has the following tools in his path:
   - adb (default at SDK\platform_tools, only required if `-i` flag is used)
 - apktool [installation manual](https://ibotpeaches.github.io/Apktool/install/)
 - keytool (default at jdk or jre bin folders, only required if `-k` flag is missing)
-  ```
-  apkpatcher -a base.apk -g ~/Tools/apkpatcher/gadgets/12.5.9/frida-gadget-12.5.9-android-arm.so
-  ```
