@@ -1,0 +1,43 @@
+name: 'Apkmod'
+description: 'Inject frida js script into an apk'
+
+inputs:
+  original-apk:
+    description: 'Path to original apk file'
+    required: true
+
+  output-apk:
+    description: 'Path to output apk file'
+    required: true
+
+  frida-script:
+    description: 'Path to frida js script to inject'
+    required: true
+
+  artifact-name:
+    description: 'Name of build artifact to upload'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Prepare apkmod
+      run: pip install apkmod && buildapp_fetch_tools
+      shell: pwsh
+
+    - name: Create patched app
+      run: apkmod -a ${{ inputs.original-apk }} -s ${{ inputs.frida-script }} -o ${{ inputs.output-apk }}
+      shell: pwsh
+
+    - name: Upload patched app
+      if: inputs.artifact-name != ''
+      uses: actions/upload-artifact@v3.1.2
+
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.output-apk }}
