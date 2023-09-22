@@ -1,5 +1,11 @@
-name: 'Apkmod'
+name: 'apkmod-automation'
+
+author: "Ariel Tubul"
 description: 'Inject frida js script into an apk'
+
+branding:
+  color: 'orange'
+  icon: 'smartphone'
 
 inputs:
   original-apk:
