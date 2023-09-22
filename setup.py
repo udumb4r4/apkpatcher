@@ -8,7 +8,7 @@ README_PATH = CURRENT_FOLDER / 'README.md'
 
 setuptools.setup(
     name = "apkmod",
-    version = "1.1.0",
+    version = "1.1.1",
     author = "Ariel Tubul",
     packages = setuptools.find_packages(),
     long_description=README_PATH.read_text(),

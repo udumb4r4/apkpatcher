@@ -1,6 +1,6 @@
-import argparse
 import buildapp
-import subprocess
+
+import argparse
 from pathlib import Path
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
@@ -12,15 +12,7 @@ from .android_manifest_util import AndroidManifestPatcher
 @contextmanager
 def decompiled_context(apk_path: Path):
     with TemporaryDirectory() as decompiled_path:
-        subprocess.run(
-            f'apktool d -f {apk_path.resolve()} -o {decompiled_path}',
-            shell=True,
-            check=True,
-            input='\n'.encode(),
-            stderr=subprocess.PIPE,
-            stdout=subprocess.DEVNULL
-        )
-
+        buildapp.buildapp.run_process(f'apktool d -f {apk_path.resolve()} -o {decompiled_path}', input_string='\n')
         yield Path(decompiled_path)
 
 
