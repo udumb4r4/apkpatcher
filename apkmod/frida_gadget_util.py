@@ -88,19 +88,17 @@ class FridaGadgetManager:
         GADGET_PATH = './libfrida-gadget.so'
         CONFIG_PATH = './libfrida-gadget.config.so'
 
-        FRIDA_CONFIGURATIONS = \
-f'''
+        FRIDA_CONFIGURATIONS = f'''
 {{
-    "interaction": {{
+    "interaction":
+    {{
         "type": "script",
-        "address": "127.0.0.1",
-        "port": 27042,
         "path": "{SCRIPT_PATH}"
     }}
 }}
 '''
+
         copyfile(gadget_path, arch_lib_folder / GADGET_PATH)
         copyfile(script_path, arch_lib_folder / SCRIPT_PATH)
 
-        with open(arch_lib_folder / CONFIG_PATH, 'w') as config_file:
-            config_file.write(FRIDA_CONFIGURATIONS)
+        (arch_lib_folder / CONFIG_PATH).write_text(FRIDA_CONFIGURATIONS)
