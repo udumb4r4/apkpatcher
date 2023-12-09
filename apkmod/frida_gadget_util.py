@@ -9,7 +9,7 @@ from typing import Optional, Iterable
 
 class FridaGadgetManager:
     INJECTION_SMALI_CODE = '''
-    const-string v0, "frida-gadget"
+    const-string v0, "rel-apkmod"
     invoke-static {v0}, Ljava/lang/System;->loadLibrary(Ljava/lang/String;)V'''
 
     def __init__(self, update_gadgets: bool = False, gadget_path: Optional[Path] = None):
@@ -84,9 +84,9 @@ class FridaGadgetManager:
 
     @staticmethod
     def __write_libs(arch_lib_folder: Path, gadget_path: Path, script_path: Path):
-        SCRIPT_PATH = './libhook.js.so'
-        GADGET_PATH = './libfrida-gadget.so'
-        CONFIG_PATH = './libfrida-gadget.config.so'
+        GADGET_PATH = './librel-apkmod.so'
+        SCRIPT_PATH = './librel-apkmod.js.so'
+        CONFIG_PATH = './librel-apkmod.config.so'
 
         FRIDA_CONFIGURATIONS = f'''
 {{
