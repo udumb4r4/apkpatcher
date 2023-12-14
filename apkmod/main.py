@@ -24,6 +24,7 @@ def parse_arguments():
     parser.add_argument('-o', '--output-file', required=True, help='output patched apk')
     parser.add_argument('-k', '--keystore', required=False, help='path of keystore to use')
     parser.add_argument('-i', '--install', action='store_true', help='adb install after build')
+    parser.add_argument('-n', '--do-not-sign', action='store_true', help='do not sign the built apk')
     parser.add_argument('-u', '--update-gadgets', action='store_true', help='download newest gadgets from github')
     parser.add_argument('-w', '--wait-before-repackage', action='store_true', help='Waits for your OK before repackaging the apk')
 
@@ -50,7 +51,7 @@ def main():
         if args.wait_before_repackage:
             input(f'About to repackage {smali_folder}\nPress enter to continue...')
 
-        buildapp.build_app(args.output_file, smali_folder, args.keystore, args.install)
+        buildapp.build_app(args.output_file, smali_folder, args.keystore, args.install, not args.do_not_sign)
 
 
 if __name__ == '__main__':
