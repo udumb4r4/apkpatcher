@@ -1,0 +1,68 @@
+repo_name: udumb4r4/apkpatcher
+report_id: 4d68f14e98b68f9fa307c8a9e5fa6166
+version: 0.1
+repo_type: Public
+timestamp: '2024-05-15T10:16:44+00:00'
+requested_by: udumb4r4
+provider: github
+branch: master
+detected_tools_count: 5
+tools:
+- name: Python
+  description: A clear and powerful object-oriented programming language, comparable
+    to Perl, Ruby, Scheme, or Java.
+  website_url: https://www.python.org
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/993/pUBY5pVj.png
+  detection_source_url: https://github.com/udumb4r4/apkpatcher
+  detection_source: Repo Metadata
+- name: Git
+  description: Fast, scalable, distributed revision control system
+  website_url: http://git-scm.com/
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Version Control System
+  image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/udumb4r4/apkpatcher
+  detection_source: Repo Metadata
+- name: GitHub Actions
+  description: Automate your workflow from idea to production
+  website_url: https://github.com/features/actions
+  open_source: false
+  hosted_saas: true
+  category: Build, Test, Deploy
+  sub_category: Continuous Integration
+  image_url: https://img.stackshare.io/service/11563/actions.png
+  detection_source_url: https://github.com/udumb4r4/apkpatcher/blob/master/.github/workflows/python-package-conda.yml
+  detection_source: ".github/workflows/python-package-conda.yml"
+  last_updated_by: udumb4r4
+  last_updated_on: 2024-01-29 01:59:19.000000000 Z
+- name: PyPI
+  description: A repository of software for the Python programming language
+  website_url: https://pypi.org/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Hosted Package Repository
+  image_url: https://img.stackshare.io/service/12572/-RIWgodF_400x400.jpg
+  detection_source_url: https://github.com/udumb4r4/apkpatcher/blob/master/requirements.txt
+  detection_source: requirements.txt
+  last_updated_by: Vinicius Henrique Marangoni
+  last_updated_on: 2019-05-28 03:54:47.000000000 Z
+- name: requests
+  description: Python HTTP for Humans
+  package_url: https://pypi.org/project/requests
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19826/default_d7c684bf2673f008a9f02ac93901229297a22d7e.png
+  detection_source_url: https://github.com/udumb4r4/apkpatcher/blob/master/requirements.txt
+  detection_source: requirements.txt
+  last_updated_by: Vinicius Henrique Marangoni
+  last_updated_on: 2019-05-28 03:54:47.000000000 Z
